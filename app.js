@@ -3,7 +3,9 @@ import cors from "cors";
 import coursesRouter from "./routes/courses.js";
 import plansRouter from "./routes/plans.js";
 import categoriesRouter from "./routes/categories.js";
+import authRoutes from "./routes/auth.js";
 
+dotenv.config();
 const app = express();
 const PORT = 3000;
 
@@ -11,10 +13,13 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+// Use Auth Routes
+
 // Static file serving
 app.use("/images", express.static("public/images"));
 
 // Routes
+app.use("/api/auth", authRoutes);
 app.use("/courses", coursesRouter);
 app.use("/plans", plansRouter);
 app.use("/categories", categoriesRouter);
