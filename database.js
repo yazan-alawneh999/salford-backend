@@ -61,7 +61,7 @@ export async function getPlans() {
 /* --------------------- Categories (simple helpers) --------------------- */
 
 export async function getCategories() {
-  const [rows] = await pool.query(`SELECT * FROM categories ORDER BY name ASC`);
+  const [rows] = await pool.query(`SELECT * FROM categories `);
   return rows;
 }
 
@@ -190,6 +190,14 @@ export async function getCoursesWithProgressByUser(userId) {
     ORDER BY c.id
     `,
     [userId]
+  );
+  return rows;
+}
+
+export async function getCoursesByCategoryId(categoryId) {
+  const [rows] = await pool.query(
+    `SELECT * FROM courses WHERE category_id = ? ORDER BY id DESC`,
+    [categoryId]
   );
   return rows;
 }

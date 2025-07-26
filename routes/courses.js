@@ -7,6 +7,7 @@ import {
   getTrendingCourses,
   getPopularCourses,
   getCoursesWithProgressByUser,
+  getCoursesByCategoryId,
 } from "../database.js";
 
 const router = express.Router();
@@ -72,6 +73,16 @@ router.get("/:id", async (req, res, next) => {
     const course = await getCourseById(req.params.id);
     if (!course) return res.status(404).json({ error: "Not found" });
     res.json(course);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/category/:categoryId", async (req, res, next) => {
+  try {
+    const { categoryId } = req.params;
+    const courses = await getCoursesByCategoryId(categoryId);
+    res.json(courses);
   } catch (err) {
     next(err);
   }

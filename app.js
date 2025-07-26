@@ -11,6 +11,9 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+// Static file serving
+app.use("/images", express.static("public/images"));
+
 // Routes
 app.use("/courses", coursesRouter);
 app.use("/plans", plansRouter);
