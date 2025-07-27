@@ -32,8 +32,8 @@ router.post("/signup", async (req, res) => {
 
     // Auto-create profile (optional)
     await pool.query(
-      "INSERT INTO profiles (user_id, display_name) VALUES (?, ?)",
-      [userId, email.split("@")[0]]
+      "INSERT INTO profiles (user_id, display_name,image_url) VALUES (?, ?,?)",
+      [userId, email.split("@")[0], "profile.jpg"]
     );
 
     const token = jwt.sign({ userId }, JWT_SECRET, {

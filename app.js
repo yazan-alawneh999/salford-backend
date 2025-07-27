@@ -21,10 +21,10 @@ app.use("/images", express.static("public/images"));
 
 // Routes
 app.use("/api/auth", authRoutes);
-app.use("/courses", coursesRouter);
-// app.use("/courses", verifyToken, coursesRouter);
-app.use("/plans", plansRouter);
-app.use("/categories", categoriesRouter);
+// app.use("/courses", coursesRouter);
+app.use("/courses", verifyToken, coursesRouter);
+app.use("/plans", verifyToken, plansRouter);
+app.use("/categories", verifyToken, categoriesRouter);
 
 // Health check
 app.get("/", (req, res) => {
