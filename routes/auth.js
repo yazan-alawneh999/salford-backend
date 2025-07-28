@@ -39,7 +39,7 @@ router.post("/signup", async (req, res) => {
     const token = jwt.sign({ userId }, JWT_SECRET, {
       expiresIn: JWT_EXPIRES_IN,
     });
-    res.status(201).json({ token });
+    res.status(201).json({ token, userId });
   } catch (err) {
     res.status(500).json({ error: "Signup failed", details: err.message });
   }
@@ -65,7 +65,7 @@ router.post("/signin", async (req, res) => {
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, {
       expiresIn: JWT_EXPIRES_IN,
     });
-    res.json({ token });
+    res.json({ token, userId: user.id });
   } catch (err) {
     res.status(500).json({ error: "Signin failed", details: err.message });
   }
