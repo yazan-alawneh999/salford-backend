@@ -93,56 +93,240 @@ export async function getCourseDetails(courseId) {
   try {
     await conn.beginTransaction();
 
-    const [[course]] = await conn.query(`SELECT * FROM courses WHERE id = ?`, [
-      courseId,
-    ]);
-    if (!course) {
+    const [courseRows] = await conn.query(
+      `SELECT * FROM courses WHERE id = ?`,
+      [courseId]
+    );
+    if (courseRows.length === 0) {
       await conn.release();
       return null;
     }
+    const course = courseRows[0];
 
-    const [subjects] = await conn.query(
+    const [subjectRows] = await conn.query(
       `SELECT * FROM subjects WHERE course_id = ? ORDER BY id`,
       [courseId]
     );
+    const numSubjects = subjectRows.length;
 
-    // Fetch lessons for all subjects in one go
-    let lessonsBySubject = {};
-    if (subjects.length > 0) {
-      const subjectIds = subjects.map((s) => s.id);
-      const [lessons] = await conn.query(
-        `SELECT * 
-         FROM lessons 
-         WHERE subject_id IN ( ${subjectIds.map(() => "?").join(", ")} )
-         ORDER BY id`,
-        subjectIds
-      );
+    const subjectsWithLessons = await Promise.all(
+      subjectRows.map(async (subject) => {
+        const [lessons] = await conn.query(
+          `SELECT * FROM lessons WHERE subject_id = ? ORDER BY id LIMIT 3`,
+          [subject.id]
+        );
+        return { ...subject, lessons };
+      })
+    );
 
-      // group lessons by subject_id
-      lessonsBySubject = lessons.reduce((acc, l) => {
-        acc[l.subject_id] ??= [];
-        acc[l.subject_id].push(l);
-        return acc;
-      }, {});
-    }
+    const [lessonCountResult] = await conn.query(
+      `SELECT COUNT(*) AS totalLessons FROM lessons WHERE subject_id IN (
+        SELECT id FROM subjects WHERE course_id = ?
+      )`,
+      [courseId]
+    );
 
-    const subjectsWithLessons = subjects.map((s) => ({
-      ...s,
-      lessons: lessonsBySubject[s.id] ?? [],
-    }));
+    const totalLessons =
+      lessonCountResult.length > 0 ? lessonCountResult[0].totalLessons : 0;
 
     await conn.commit();
     await conn.release();
 
-    return {
+    const result = {
       course,
+      numSubjects,
+      totalLessons,
       subjects: subjectsWithLessons,
     };
+
+    console.log("Final course details result:", result); // ← Debug here
+
+    return result;
   } catch (err) {
-    await pool.query("ROLLBACK");
+    await conn.rollback();
+    await conn.release();
     throw err;
   }
 }
+
+// export async function getCourseDetails(courseId) {
+//   const conn = await pool.getConnection();
+//   try {
+//     await conn.beginTransaction();
+
+//     // 1. Get course
+//     const [courseRows] = await conn.query(
+//       `SELECT * FROM courses WHERE id = ?`,
+//       [courseId]
+//     );
+
+//     if (courseRows.length === 0) {
+//       await conn.release();
+//       return null;
+//     }
+
+//     const course = courseRows[0];
+
+//     // 2. Get subjects
+//     const [subjectRows] = await conn.query(
+//       `SELECT * FROM subjects WHERE course_id = ? ORDER BY id`,
+//       [courseId]
+//     );
+
+//     const numSubjects = subjectRows.length;
+
+//     // 3. Get 3 lessons per subject
+//     const subjectsWithLessons = await Promise.all(
+//       subjectRows.map(async (subject) => {
+//         const [lessons] = await conn.query(
+//           `SELECT * FROM lessons WHERE subject_id = ? ORDER BY id LIMIT 3`,
+//           [subject.id]
+//         );
+//         return {
+//           ...subject,
+//           lessons,
+//         };
+//       })
+//     );
+
+//     // 4. Count total lessons for the course
+//     const [lessonCountResult] = await conn.query(
+//       `
+//   SELECT COUNT(*) AS totalLessons
+//   FROM lessons
+//   WHERE subject_id IN (
+//     SELECT id FROM subjects WHERE course_id = ?
+//   )`,
+//       [courseId]
+//     );
+
+//     const totalLessons =
+//       lessonCountResult.length > 0 ? lessonCountResult[0].totalLessons : 0;
+
+//     await conn.commit();
+//     await conn.release();
+
+//     return {
+//       course,
+//       numSubjects,
+//       totalLessons,
+//       subjects: subjectsWithLessons,
+//     };
+//   } catch (err) {
+//     await conn.rollback();
+//     await conn.release();
+//     throw err;
+//   }
+// }
+
+// export async function getCourseDetails(courseId) {
+//   const conn = await pool.getConnection();
+//   try {
+//     await conn.beginTransaction();
+
+//     // Get course details
+//     const [[course]] = await conn.query(`SELECT * FROM courses WHERE id = ?`, [
+//       courseId,
+//     ]);
+
+//     if (!course) {
+//       await conn.release();
+//       return null;
+//     }
+
+//     // Get all subjects for the course
+//     const [subjects] = await conn.query(
+//       `SELECT * FROM subjects
+//        WHERE course_id = ?
+//        ORDER BY id`,
+//       [courseId]
+//     );
+
+//     // Get exactly 3 lessons for each subject
+//     const subjectsWithLessons = await Promise.all(
+//       subjects.map(async (subject) => {
+//         const [lessons] = await conn.query(
+//           `SELECT * FROM lessons
+//            WHERE subject_id = ?
+//            ORDER BY id
+//            LIMIT 3`,
+//           [subject.id]
+//         );
+//         return {
+//           ...subject,
+//           lessons,
+//         };
+//       })
+//     );
+
+//     await conn.commit();
+//     await conn.release();
+
+//     return {
+//       course,
+//       subjects: subjectsWithLessons,
+//     };
+//   } catch (err) {
+//     await conn.rollback();
+//     await conn.release();
+//     throw err;
+//   }
+// }
+// export async function getCourseDetails(courseId) {
+//   const conn = await pool.getConnection();
+//   try {
+//     await conn.beginTransaction();
+
+//     const [[course]] = await conn.query(`SELECT * FROM courses WHERE id = ?`, [
+//       courseId,
+//     ]);
+//     if (!course) {
+//       await conn.release();
+//       return null;
+//     }
+
+//     const [subjects] = await conn.query(
+//       `SELECT * FROM subjects WHERE course_id = ? ORDER BY id`,
+//       [courseId]
+//     );
+
+//     // Fetch lessons for all subjects in one go
+//     let lessonsBySubject = {};
+//     if (subjects.length > 0) {
+//       const subjectIds = subjects.map((s) => s.id);
+//       const [lessons] = await conn.query(
+//         `SELECT *
+//          FROM lessons
+//          WHERE subject_id IN ( ${subjectIds.map(() => "?").join(", ")} )
+//          ORDER BY id`,
+//         subjectIds
+//       );
+
+//       // group lessons by subject_id
+//       lessonsBySubject = lessons.reduce((acc, l) => {
+//         acc[l.subject_id] ??= [];
+//         acc[l.subject_id].push(l);
+//         return acc;
+//       }, {});
+//     }
+
+//     const subjectsWithLessons = subjects.map((s) => ({
+//       ...s,
+//       lessons: lessonsBySubject[s.id] ?? [],
+//     }));
+
+//     await conn.commit();
+//     await conn.release();
+
+//     return {
+//       course,
+//       subjects: subjectsWithLessons,
+//     };
+//   } catch (err) {
+//     await pool.query("ROLLBACK");
+//     throw err;
+//   }
+// }
 
 /* --------------------- Subject details (with lessons) --------------------- */
 /**
@@ -204,6 +388,49 @@ export async function getCoursesWithProgressByUser(userId) {
   return rows;
 }
 
+/* --------------- Course details (with subjects & lessons) --------------- */
+/**
+ * Returns:
+ * {
+ *   course: {...},
+ *   subjects: [
+ *     {
+ *       ...subject,
+ *       lessons: [...]
+ *     }
+ *   ]
+ * }
+ */
+export async function getCourseInfo(courseId) {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [[course]] = await conn.query(`SELECT * FROM courses WHERE id = ?`, [
+      courseId,
+    ]);
+    if (!course) {
+      await conn.release();
+      return null;
+    }
+
+    const [subjects] = await conn.query(
+      `SELECT * FROM subjects WHERE course_id = ? ORDER BY id`,
+      [courseId]
+    );
+
+    await conn.commit();
+    await conn.release();
+
+    return {
+      course,
+      subjects: subjects,
+    };
+  } catch (err) {
+    await pool.query("ROLLBACK");
+    throw err;
+  }
+}
 export async function getCoursesByCategoryId(categoryId) {
   const [rows] = await pool.query(
     `SELECT * FROM courses WHERE category_id = ? ORDER BY id DESC`,

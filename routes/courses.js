@@ -48,6 +48,7 @@ router.get("/popular", async (req, res, next) => {
     next(err);
   }
 });
+``;
 
 router.get("/details/:id", async (req, res, next) => {
   try {
