@@ -3,6 +3,7 @@ import cors from "cors";
 import coursesRouter from "./routes/courses.js";
 import plansRouter from "./routes/plans.js";
 import categoriesRouter from "./routes/categories.js";
+import subscriptionRouter from "./routes/subscriptions.js";
 import authRoutes from "./routes/auth.js";
 import profilesRouter from "./routes/profiles.js";
 import { verifyToken } from "./middleware/auth.midleware.js";
@@ -23,10 +24,10 @@ app.use("/images", express.static("public/images"));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/profiles", verifyToken, profilesRouter);
-// app.use("/courses", coursesRouter);
-app.use("/courses", coursesRouter);
+app.use("/courses", verifyToken, coursesRouter);
 app.use("/plans", verifyToken, plansRouter);
 app.use("/categories", verifyToken, categoriesRouter);
+app.use("/subscriptions", verifyToken, subscriptionRouter);
 
 // Health check
 app.get("/", (req, res) => {
