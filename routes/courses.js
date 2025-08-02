@@ -8,6 +8,9 @@ import {
   getPopularCourses,
   getCoursesWithProgressByUser,
   getCoursesByCategoryId,
+  getSubjectDetails,
+  getTrendingCoursesById,
+  getPopularCoursesById,
 } from "../database.js";
 
 const router = express.Router();
@@ -39,7 +42,23 @@ router.get("/trending", async (req, res, next) => {
     next(err);
   }
 });
+router.get("/trending/:id", async (req, res, next) => {
+  try {
+    const trending = await getTrendingCoursesById(req.params.id);
+    res.json(trending);
+  } catch (err) {
+    next(err);
+  }
+});
 
+router.get("/popular/:id", async (req, res, next) => {
+  try {
+    const popular = await getPopularCoursesById(req.params.id);
+    res.json(popular);
+  } catch (err) {
+    next(err);
+  }
+});
 router.get("/popular", async (req, res, next) => {
   try {
     const popular = await getPopularCourses();
@@ -84,6 +103,15 @@ router.get("/category/:categoryId", async (req, res, next) => {
     const { categoryId } = req.params;
     const courses = await getCoursesByCategoryId(categoryId);
     res.json(courses);
+  } catch (err) {
+    next(err);
+  }
+});
+router.get("/subject/:subjectId", async (req, res, next) => {
+  try {
+    const { subjectId } = req.params;
+    const result = await getSubjectDetails(subjectId);
+    res.json(result);
   } catch (err) {
     next(err);
   }

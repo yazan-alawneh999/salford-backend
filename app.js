@@ -24,7 +24,7 @@ app.use("/images", express.static("public/images"));
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/profiles", verifyToken, profilesRouter);
-app.use("/courses", verifyToken, coursesRouter);
+app.use("/courses", coursesRouter);
 app.use("/plans", verifyToken, plansRouter);
 app.use("/categories", verifyToken, categoriesRouter);
 app.use("/subscriptions", verifyToken, subscriptionRouter);
